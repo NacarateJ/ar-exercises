@@ -113,3 +113,101 @@ Let's tell Active Record that these two tables are in fact related via the `stor
 2. Ask the user for a store name (store it in a variable)
 3. Attempt to create a store with the inputted name but leave out the other fields (annual_revenue, mens_apparel, and womens_apparel)
 4. Display the error messages provided back from ActiveRecord to the user (one on each line) after you attempt to save/create the record
+
+## STRETCH
+
+Having read a bit about Callbacks, it's time to play with them a bit to really let it sink in.
+
+### Exercises
+You're going to step up the Stores & Employees exercise a notch by solving some business problems by using Callbacks. This will help you get comfortable with them and also appreciate what problems they aim to solve.
+
+### Exercise 1: Employee passwords
+**Scenario:** We want to be able to give employees a password (string) that is auto-generated when their record is created in the database.
+
+### Step 1: Setup
+Create a new exercise file called `exercise_8.rb`, add the necessary `require_relative` calls based on the pattern you see previous exercises following in this project.
+
+### Step 2: Modify Schema
+In order to solve this problem, we need a new column on employees called `password`. Go ahead and modify the schema and it is as a `string` (which really just means `varchar` in SQL) column to the `employees` table.
+
+### Step 3: Add a callback
+Let's revisit the goal:
+
+Before an employee is created, AR should automatically create a random (8 character string) password.
+
+There are multiple ways to register callbacks in AR, instead of passing in a block, we suggest using the approach where you give it the name of a private method using symbols. Although it results in "more lines of code", it does read better and feels better organized.
+
+Since the key words here are "before" and "created", you should investigate how to register a `before_create` callback method on the Employee model.
+
+The callback method will really just be one line, where it will set `self.password` (or you could just write `password` instead) to a random 8 character string.
+
+You could register this callback above or below your associations or validations. AR doesn't care. That said, we suggest the following order / style for your model definitions so that there is some consistency with them:
+
+1. Declare Associations
+2. Declare Validations
+3. Register Callback Methods using symbols (method names)
+4. ... Your regular methods ...
+5. Private methods (eg: callback code)
+
+**NOTE:** The callback method should ideally be a private method and have a descriptive name.
+
+Can you speak to *WHY* the callback method should be private? What does that mean? If you're not sure, research and see if you can answer this question.
+
+### Step 4: Verify
+In `exercise_8.rb` create another employee for an existing store and once created (using `save` or `create`) but without specifying a password when creating the record so that it can be auto-created by the model.
+
+Use `puts` in the exercise file to print out the password after the record is created to make sure that is working.
+
+### Step 5: Question - What about `after_create`?
+If you switch the `before_create` into an `after_create` instead, what do we expect will happen? Have a hypothesis and experiment.
+
+Run your exercise to check your assumption.
+
+If it does not work, is there a change you can make to the callback method itself to fix it, without reverting back to `before_create`?
+
+Once you get it working with `after_create`, it's worth asking: Which approach is better. Thoughts?
+
+### Step 6: Question - `before_save` instead ?
+Similarly, what if you changed the `before_create` to a `before_save`? What's the challenge there?
+
+Read up on the definition or experiment to find out what the result could be.
+
+### Exercise 2: Disallow store destruction
+***Scenario:*** For data integrity reasons, we want to restrict users from deleting (aka destroying) store records for stores that have 1 or more employees.
+
+### Step 1: Setup
+Create a new exercise file called `exercise_9.rb`, add the necessary `require_relative` calls based on the pattern you see previous exercises following in this project.
+
+### Step 2: Destruction code
+Add the following "driver" code to your new exercise file:
+
+# Make sure non-empty stores cannot be destroyed
+@store1 = Store.find(1)
+if @store1.destroy
+  puts "Store destroyed! It has #{@store1.employees.size} =/"
+else
+  puts "Could not destroy store :)"
+end
+
+```ruby
+# Make sure non-empty stores cannot be destroyed
+@store1 = Store.find_by(id: 1)
+if @store1.destroy
+  puts "Store destroyed! It has #{@store1.employees.size} =/"
+else
+  puts "Could not destroy store :)"
+end
+
+# Make sure empty stores can be destroyed
+@empty_store = Store.create!(name: 'Test Empty Store', annual_revenue: 0, mens_apparel: true, womens_apparel: true)
+if @empty_store.destroy
+  puts "Empty Store destroyed! This is good"
+else
+  puts "Whoa! Empty store should be destroyable... Not cool!"
+end
+```
+
+Running this exercise you will find that it allows destruction of store1 which *does* have employees.
+
+### Step 3: Implement restriction
+Register a callback on the Store model that will help you stop the destroy life cycle from taking place in that condition. You'll need to research how to do this!
